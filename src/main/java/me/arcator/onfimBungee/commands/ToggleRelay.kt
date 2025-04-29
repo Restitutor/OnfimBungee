@@ -14,10 +14,12 @@ class ToggleCommand : Command("togglerelay") {
 
         val component: TextComponent
 
-        if (noRelayPlayers.toggle(player.uniqueId)) {
+        if (!noRelayPlayers.contains(player.uniqueId)) {
+            noRelayPlayers.add(player.uniqueId)
             component = TextComponent("Disabled inbound chat relay.")
             component.color = ChatColor.RED
         } else {
+            noRelayPlayers.remove(player.uniqueId)
             component = TextComponent("Enabled inbound chat relay.")
             component.color = ChatColor.GREEN
         }
@@ -31,10 +33,12 @@ class ToggleImage : Command("toggleimage") {
 
         val component: TextComponent
 
-        if (noImagePlayers.toggle(player.uniqueId)) {
+        if (!noImagePlayers.contains(player.uniqueId)) {
+            noImagePlayers.add(player.uniqueId)
             component = TextComponent("Disabled inbound image relay.")
             component.color = ChatColor.RED
         } else {
+            noImagePlayers.remove(player.uniqueId)
             component = TextComponent("Enabled inbound image relay.")
             component.color = ChatColor.GREEN
         }

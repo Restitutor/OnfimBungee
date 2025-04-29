@@ -1,7 +1,8 @@
 package me.arcator.onfimBungee.listener
 
 import java.util.concurrent.TimeUnit
-import me.arcator.onfimLib.format.GenericChat
+import me.arcator.onfimLib.format.EventLocation
+import me.arcator.onfimLib.format.SerializedEvent
 import me.arcator.onfimLib.format.JoinQuit
 import net.md_5.bungee.api.event.PostLoginEvent
 import net.md_5.bungee.api.plugin.Listener
@@ -9,7 +10,7 @@ import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.api.scheduler.TaskScheduler
 import net.md_5.bungee.event.EventHandler
 
-class JoinListener(private val plugin: Plugin, private val sendEvt: (GenericChat) -> Unit) :
+class JoinListener(private val plugin: Plugin, private val sendEvt: (SerializedEvent) -> Unit) :
     Listener {
     @EventHandler
     fun onPostLogin(event: PostLoginEvent) {
@@ -26,7 +27,7 @@ class JoinListener(private val plugin: Plugin, private val sendEvt: (GenericChat
                         scheduler.schedule(plugin, this, 1, TimeUnit.SECONDS)
                         return
                     } else player.server.info.name
-                    sendEvt(JoinQuit(name = player.displayName, server = server, type = "Join"))
+                    sendEvt(JoinQuit(username = player.displayName, server = EventLocation(name=server), type = "Join"))
                 }
             },
             1, TimeUnit.SECONDS,

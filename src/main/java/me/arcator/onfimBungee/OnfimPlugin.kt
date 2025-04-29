@@ -8,22 +8,36 @@ import me.arcator.onfimBungee.listener.JoinListener
 import me.arcator.onfimBungee.listener.QuitListener
 import me.arcator.onfimBungee.listener.SwitchListener
 import me.arcator.onfimBungee.sender.ChatSender
-import me.arcator.onfimLib.format.GenericChat
-import me.arcator.onfimLib.format.PrintableGeneric
+import me.arcator.onfimLib.SCTPIn
+import me.arcator.onfimLib.UDPIn
+import me.arcator.onfimLib.format.SerializedEvent
+import me.arcator.onfimLib.format.PlayerMoveInterface
 import me.arcator.onfimLib.out.Dispatcher
-import me.arcator.onfimLib.sIn
-import me.arcator.onfimLib.uIn
+import me.arcator.onfimLib.utils.Unpacker
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.plugin.Plugin
 
 @Suppress("unused")
 class OnfimPlugin : Plugin() {
     private val cs = ChatSender(this, proxy.scheduler)
-    private var sListener = sIn(cs)
-    private var uListener = uIn(cs)
-    private val ds = Dispatcher { text ->
-        // logger.info(text);
+
+
+    private val unpacker = Unpacker(cs, logger::info)
+    private val uListener = UDPIn(unpacker::read)
+    private val sListener = SCTPIn(unpacker::read)
+    private val ds: Dispatcher =
+        Dispatcher(
+            { text ->
+                // Debug logger.info(text)
+            },
+            uListener::port,
+            sListener::port,
+        )
+
+    init {
+        unpacker.setOnHeartbeat(ds::getHeartbeat)
     }
+
 
     override fun onEnable() {
         ProxyServer.getInstance().pluginManager.registerCommand(this, ToggleCommand())
@@ -38,10 +52,10 @@ class OnfimPlugin : Plugin() {
             10, 30, TimeUnit.SECONDS,
         )
 
-        val sender = { evt: GenericChat ->
+        val sender = { evt: SerializedEvent ->
             proxy.scheduler.runAsync(this) { ds.broadcast(evt) }
             // Relay to self
-            if (evt is PrintableGeneric) cs.say(evt)
+            if (evt is PlayerMoveInterface) cs.say(evt)
         }
 
         proxy.pluginManager.registerListener(this, ChatListener(sender))

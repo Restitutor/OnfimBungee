@@ -1,24 +1,24 @@
 package me.arcator.onfimBungee.sender
 
+import java.util.UUID
 import me.arcator.onfimLib.format.Chat
 import me.arcator.onfimLib.format.ImageEvt
-import me.arcator.onfimLib.format.PrintableGeneric
+import me.arcator.onfimLib.format.PlayerMoveInterface
 import me.arcator.onfimLib.interfaces.ChatSenderInterface
-import me.arcator.onfimLib.structs.ToggleSet
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences
-import net.kyori.adventure.text.Component
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.connection.ProxiedPlayer
 import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.api.scheduler.TaskScheduler
 
+
+val noRelayPlayers = mutableSetOf<UUID>()
+val noImagePlayers = mutableSetOf<UUID>()
+
 private fun broadcastPlayers(): List<ProxiedPlayer> {
     return ProxyServer.getInstance().players
         .filter { player -> !noRelayPlayers.contains(player.uniqueId) }
 }
-
-val noRelayPlayers = ToggleSet()
-val noImagePlayers = ToggleSet()
 
 class ChatSender(private val plugin: Plugin, private val scheduler: TaskScheduler) :
     ChatSenderInterface {
@@ -36,7 +36,7 @@ class ChatSender(private val plugin: Plugin, private val scheduler: TaskSchedule
             val text = evt.getChatMessage()
             broadcastPlayers()
                 // Avoid duplicates for different bungees to same server
-                .filter { player -> player.server == null || (player.server.info.name != evt.server) }
+                .filter { player -> player.server == null || (player.server.info.name != evt.server.name) }
                 .forEach { player ->
                     adv.player(player).sendMessage { text }
                 }
@@ -56,9 +56,9 @@ class ChatSender(private val plugin: Plugin, private val scheduler: TaskSchedule
         }
     }
 
-    override fun say(evt: PrintableGeneric) {
+    override fun say(evt: PlayerMoveInterface) {
         schedule {
-            val text = Component.text(evt.printString, evt.colour)
+            val text = evt.getComponent()
             broadcastPlayers().forEach { player ->
                 adv.player(player).sendMessage { text }
             }
